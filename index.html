@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Persona Debate</title>
+  <script src="config.js"></script>
+  <script src="config-keys.js"></script>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-hover: #4f46e5;
+      --primary-muted: rgba(99, 102, 241, 0.12);
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.06);
+      --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+      --radius: 10px;
+      --radius-sm: 6px;
+      /* Persona accent colors */
+      --persona-1: #6366f1;
+      --persona-2: #0ea5e9;
+      --persona-3: #10b981;
+      --persona-4: #f59e0b;
+      --persona-5: #8b5cf6;
+      /* Status colors */
+      --status-ready: #64748b;
+      --status-loading: #2563eb;
+      --status-error: #dc2626;
+      --status-success: #16a34a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    @keyframes bubbleFadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    .app-header {
+      background: var(--surface);
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--shadow);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .app-header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .app-header p {
+      margin: 0.25rem 0 0;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .layout {
+      display: flex;
+      min-height: calc(100vh - 80px);
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .history-sidebar {
+      width: 260px;
+      min-width: 260px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 1rem;
+      transition: width 0.2s, min-width 0.2s, padding 0.2s;
+      overflow: hidden;
+    }
+
+    .history-sidebar.collapsed {
+      width: 48px;
+      min-width: 48px;
+      padding: 0.75rem;
+    }
+
+    .history-sidebar.collapsed .history-title-text,
+    .history-sidebar.collapsed .history-list,
+    .history-sidebar.collapsed .history-clear-btn,
+    .history-sidebar.collapsed .reset-app-btn {
+      display: none;
+    }
+
+    .history-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      width: 100%;
+      padding: 0.5rem 0;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text);
+      border-radius: var(--radius-sm);
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .history-toggle:hover {
+      background: var(--primary-muted);
+      color: var(--primary);
+    }
+
+    .history-toggle-icon {
+      flex-shrink: 0;
+      transition: transform 0.2s;
+    }
+
+    .history-sidebar.collapsed .history-toggle-icon {
+      transform: rotate(-90deg);
+    }
+
+    .history-list {
+      margin-top: 0.75rem;
+      list-style: none;
+      padding: 0;
+    }
+
+    .history-list li {
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      margin-bottom: 0.25rem;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .history-list li:hover {
+      background: var(--primary-muted);
+      color: var(--primary);
+    }
+
+    .history-item-new {
+      position: relative;
+    }
+
+    .history-item-new .history-new-badge {
+      position: absolute;
+      top: 0.35rem;
+      right: 0.5rem;
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      color: var(--primary);
+      background: var(--primary-muted);
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+    }
+
+    .history-list li.history-empty {
+      cursor: default;
+      font-style: italic;
+    }
+
+    .history-list li.history-empty:hover {
+      background: transparent;
+      color: var(--text-muted);
+    }
+
+    .history-item-label {
+      display: block;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    .history-item-date {
+      display: block;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.2rem;
+    }
+
+    .history-clear-btn {
+      width: 100%;
+      margin-top: 0.75rem;
+      padding: 0.5rem;
+      font-size: 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+
+    .history-clear-btn:hover {
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem;
+      gap: 1.5rem;
+      overflow: auto;
+    }
+
+    @media (min-width: 900px) {
+      .main-content {
+        flex-direction: row;
+        align-items: flex-start;
+      }
+    }
+
+    .column {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-card);
+      border: 1px solid var(--border);
+      padding: 1.25rem;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-title {
+      margin: 0 0 0.75rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .input-section .card:first-child {
+      margin-bottom: 0;
+    }
+
+    #productIdea {
+      width: 100%;
+      min-height: 80px;
+      max-height: 280px;
+      padding: 0.75rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.9rem;
+      resize: none;
+      overflow-y: auto;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    #productIdea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px var(--primary-muted);
+    }
+
+    .personas-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .persona-card {
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      border-left-width: 4px;
+      padding: 0.75rem 1rem;
+      background: var(--surface);
+      transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    }
+
+    .persona-card:hover {
+      box-shadow: var(--shadow);
+    }
+
+    .persona-card:nth-child(1) { border-left-color: var(--persona-1); }
+    .persona-card:nth-child(2) { border-left-color: var(--persona-2); }
+    .persona-card:nth-child(3) { border-left-color: var(--persona-3); }
+    .persona-card:nth-child(4) { border-left-color: var(--persona-4); }
+    .persona-card:nth-child(5) { border-left-color: var(--persona-5); }
+
+    .persona-card label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.35rem;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .persona-card input[type="text"] {
+      width: 100%;
+      padding: 0.4rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .persona-card input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .persona-card textarea {
+      width: 100%;
+      min-height: 52px;
+      padding: 0.4rem 0.5rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      resize: vertical;
+    }
+
+    .persona-card textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    #generateBtn {
+      width: 100%;
+      padding: 0.75rem 1.25rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease, opacity 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    #generateBtn:hover:not(:disabled) {
+      background: var(--primary-hover);
+    }
+
+    #generateBtn:active:not(:disabled) {
+      transform: scale(0.99);
+    }
+
+    #generateBtn .generate-btn-spinner {
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    #generateBtn .generate-btn-spinner.hidden,
+    #generateBtn .generate-btn-text.hidden {
+      display: none;
+    }
+
+    .status-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0;
+      min-height: 1.5rem;
+    }
+
+    .status-spinner {
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid var(--border);
+      border-top-color: var(--status-loading);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+
+    .status-spinner.hidden {
+      display: none;
+    }
+
+    #status {
+      font-size: 0.85rem;
+    }
+
+    #status.ready { color: var(--status-ready); }
+    #status.loading {
+      color: var(--status-loading);
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    #status.error { color: var(--status-error); }
+    #status.success { color: var(--status-success); }
+
+    .product-idea-char-count {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+      text-align: right;
+    }
+
+    .product-idea-char-count.over-limit {
+      color: var(--status-error);
+    }
+
+    .status-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .error-details-toggle {
+      display: inline-block;
+      margin-top: 0.25rem;
+      padding: 0.2rem 0.5rem;
+      font-size: 0.75rem;
+      background: none;
+      border: none;
+      color: var(--primary);
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .error-details-toggle:hover {
+      color: var(--primary-hover);
+    }
+
+    .error-details-content {
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      font-size: 0.7rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      max-height: 120px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+    }
+
+    .retry-btn {
+      flex-shrink: 0;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid var(--primary);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--primary);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .retry-btn:hover {
+      background: var(--primary-muted);
+    }
+
+    .reset-app-btn {
+      width: 100%;
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      font-size: 0.8rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--surface);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .reset-app-btn:hover {
+      background: var(--bg);
+      color: var(--status-error);
+    }
+
+    .output-section .card {
+      min-height: 120px;
+    }
+
+    #conversation {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      min-height: 200px;
+    }
+
+    .bubble {
+      max-width: 90%;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      border-left: 4px solid;
+      background: var(--bg);
+      font-size: 0.9rem;
+      animation: bubbleFadeIn 0.35s ease-out backwards;
+    }
+
+    .bubble:nth-child(1) { animation-delay: 0.02s; }
+    .bubble:nth-child(2) { animation-delay: 0.06s; }
+    .bubble:nth-child(3) { animation-delay: 0.1s; }
+    .bubble:nth-child(4) { animation-delay: 0.14s; }
+    .bubble:nth-child(5) { animation-delay: 0.18s; }
+    .bubble:nth-child(6) { animation-delay: 0.22s; }
+    .bubble:nth-child(7) { animation-delay: 0.26s; }
+    .bubble:nth-child(8) { animation-delay: 0.3s; }
+    .bubble:nth-child(9) { animation-delay: 0.34s; }
+    .bubble:nth-child(10) { animation-delay: 0.38s; }
+    .bubble:nth-child(n+11) { animation-delay: 0.42s; }
+
+    .bubble .bubble-name {
+      font-weight: 600;
+      font-size: 0.8rem;
+      margin-bottom: 0.35rem;
+    }
+
+    .bubble:nth-child(5n+1) { border-left-color: var(--persona-1); }
+    .bubble:nth-child(5n+1) .bubble-name { color: var(--persona-1); }
+    .bubble:nth-child(5n+2) { border-left-color: var(--persona-2); }
+    .bubble:nth-child(5n+2) .bubble-name { color: var(--persona-2); }
+    .bubble:nth-child(5n+3) { border-left-color: var(--persona-3); }
+    .bubble:nth-child(5n+3) .bubble-name { color: var(--persona-3); }
+    .bubble:nth-child(5n+4) { border-left-color: var(--persona-4); }
+    .bubble:nth-child(5n+4) .bubble-name { color: var(--persona-4); }
+    .bubble:nth-child(5n+5) { border-left-color: var(--persona-5); }
+    .bubble:nth-child(5n+5) .bubble-name { color: var(--persona-5); }
+
+    #summary {
+      min-height: 80px;
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    #summary .summary-heading {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin: 1rem 0 0.35rem;
+    }
+
+    #summary .summary-heading:first-child { margin-top: 0; }
+
+    #summary ul {
+      margin: 0 0 0.5rem;
+      padding-left: 1.25rem;
+    }
+
+    #summary li {
+      margin-bottom: 0.25rem;
+    }
+
+    #generateBtn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    @media (max-width: 899px) {
+      .history-sidebar {
+        position: fixed;
+        left: 0;
+        top: 80px;
+        bottom: 0;
+        z-index: 10;
+        box-shadow: var(--shadow-md);
+      }
+
+      .history-sidebar.collapsed {
+        transform: translateX(0);
+      }
+
+      .main-content {
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <h1>Persona Debate</h1>
+    <p>Stress-test your product ideas</p>
+  </header>
+
+  <div class="layout">
+    <aside id="history" class="history-sidebar">
+      <button type="button" class="history-toggle" id="historyToggle" aria-label="Toggle history">
+        <span class="history-toggle-icon">▼</span>
+        <span class="history-title-text">History</span>
+      </button>
+      <ul class="history-list" id="historyList">
+        <!-- Saved debates will be listed here -->
+      </ul>
+      <button type="button" id="clearHistoryBtn" class="history-clear-btn">Clear History</button>
+      <button type="button" id="resetAppBtn" class="reset-app-btn">Reset App</button>
+    </aside>
+
+    <main class="main-content">
+      <section class="column input-section">
+        <div class="card">
+          <h2 class="card-title">Product idea</h2>
+          <textarea id="productIdea" placeholder="Describe your product idea..." rows="3"></textarea>
+          <div id="productIdeaCharCount" class="product-idea-char-count">0 characters</div>
+        </div>
+
+        <div class="card">
+          <h2 class="card-title">Personas</h2>
+          <div class="personas-container">
+            <div class="persona-card">
+              <label>Name</label>
+              <input type="text" class="persona-name" value="Skeptical Engineer" data-persona="1">
+              <label>Perspective</label>
+              <textarea class="persona-perspective" placeholder="Their viewpoint..." data-persona="1"></textarea>
+            </div>
+            <div class="persona-card">
+              <label>Name</label>
+              <input type="text" class="persona-name" value="Budget-Conscious Buyer" data-persona="2">
+              <label>Perspective</label>
+              <textarea class="persona-perspective" placeholder="Their viewpoint..." data-persona="2"></textarea>
+            </div>
+            <div class="persona-card">
+              <label>Name</label>
+              <input type="text" class="persona-name" value="Power User" data-persona="3">
+              <label>Perspective</label>
+              <textarea class="persona-perspective" placeholder="Their viewpoint..." data-persona="3"></textarea>
+            </div>
+            <div class="persona-card">
+              <label>Name</label>
+              <input type="text" class="persona-name" value="First-Time User" data-persona="4">
+              <label>Perspective</label>
+              <textarea class="persona-perspective" placeholder="Their viewpoint..." data-persona="4"></textarea>
+            </div>
+            <div class="persona-card">
+              <label>Name</label>
+              <input type="text" class="persona-name" value="Executive Sponsor" data-persona="5">
+              <label>Perspective</label>
+              <textarea class="persona-perspective" placeholder="Their viewpoint..." data-persona="5"></textarea>
+            </div>
+          </div>
+          <button type="button" id="generateBtn">
+            <span class="generate-btn-spinner hidden" aria-hidden="true"></span>
+            <span class="generate-btn-text">Generate Debate</span>
+          </button>
+          <div class="status-row">
+            <span id="statusSpinner" class="status-spinner hidden" aria-hidden="true"></span>
+            <div class="status-content">
+              <span id="status" class="ready">Ready</span>
+            </div>
+            <button type="button" id="retryBtn" class="retry-btn hidden">Retry</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="column output-section">
+        <div class="card">
+          <h2 class="card-title">Conversation</h2>
+          <div id="conversation"></div>
+        </div>
+        <div class="card">
+          <h2 class="card-title">Summary</h2>
+          <div id="summary"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      const generateBtn = document.getElementById('generateBtn');
+      const statusEl = document.getElementById('status');
+      const statusSpinner = document.getElementById('statusSpinner');
+      const historySidebar = document.getElementById('history');
+      const historyToggle = document.getElementById('historyToggle');
+      const conversationEl = document.getElementById('conversation');
+      const summaryEl = document.getElementById('summary');
+      const productIdeaEl = document.getElementById('productIdea');
+      const productIdeaCharCount = document.getElementById('productIdeaCharCount');
+      const retryBtn = document.getElementById('retryBtn');
+      const statusContent = document.querySelector('.status-content');
+
+      const PERSONA_BUBBLE_COLORS = [
+        '#6366f1',  /* persona-1 */
+        '#0ea5e9',  /* persona-2 */
+        '#10b981',  /* persona-3 */
+        '#f59e0b',  /* persona-4 */
+        '#8b5cf6'   /* persona-5 */
+      ];
+
+      function clearErrorDetails() {
+        if (!statusContent) return;
+        var existing = statusContent.querySelector('.error-details-container');
+        if (existing) existing.remove();
+      }
+
+      function hideRetryButton() {
+        if (retryBtn) retryBtn.classList.add('hidden');
+      }
+
+      function showError(message, details) {
+        statusEl.textContent = message;
+        statusEl.className = 'error';
+        clearErrorDetails();
+        if (details != null && details !== '') {
+          var container = document.createElement('div');
+          container.className = 'error-details-container';
+          var toggle = document.createElement('button');
+          toggle.type = 'button';
+          toggle.className = 'error-details-toggle';
+          toggle.textContent = 'Show details';
+          var content = document.createElement('pre');
+          content.className = 'error-details-content hidden';
+          content.textContent = typeof details === 'string' ? details : JSON.stringify(details, null, 2);
+          toggle.addEventListener('click', function () {
+            content.classList.toggle('hidden');
+            toggle.textContent = content.classList.contains('hidden') ? 'Show details' : 'Hide details';
+          });
+          container.appendChild(toggle);
+          container.appendChild(content);
+          statusContent.appendChild(container);
+        }
+        if (retryBtn) retryBtn.classList.remove('hidden');
+        console.error('[Persona Debate]', new Date().toISOString(), message, details != null ? { details: details } : '');
+      }
+
+      function updateStatus(message, type) {
+        statusEl.textContent = message;
+        statusEl.className = type || 'ready';
+        clearErrorDetails();
+        if (type !== 'error' && retryBtn) retryBtn.classList.add('hidden');
+      }
+
+      function setLoading(isLoading) {
+        if (statusSpinner) {
+          statusSpinner.classList.toggle('hidden', !isLoading);
+        }
+        var btnText = generateBtn ? generateBtn.querySelector('.generate-btn-text') : null;
+        var btnSpinner = generateBtn ? generateBtn.querySelector('.generate-btn-spinner') : null;
+        if (btnText) { btnText.textContent = isLoading ? 'Generating...' : 'Generate Debate'; }
+        if (btnSpinner) { btnSpinner.classList.toggle('hidden', !isLoading); }
+        generateBtn.disabled = isLoading;
+        var inputs = document.querySelectorAll('#productIdea, .persona-name, .persona-perspective');
+        inputs.forEach(function (el) { el.disabled = isLoading; });
+        if (isLoading && retryBtn) retryBtn.classList.add('hidden');
+      }
+
+      var PRODUCT_IDEA_MAX_HEIGHT = 280;
+      var PRODUCT_IDEA_MAX_LENGTH = 5000;
+
+      function updateCharCount() {
+        if (!productIdeaCharCount) return;
+        var n = (productIdeaEl && productIdeaEl.value) ? productIdeaEl.value.length : 0;
+        productIdeaCharCount.textContent = n + ' character' + (n !== 1 ? 's' : '');
+        if (n > PRODUCT_IDEA_MAX_LENGTH) {
+          productIdeaCharCount.classList.add('over-limit');
+          productIdeaCharCount.textContent = n + ' characters (max ' + PRODUCT_IDEA_MAX_LENGTH + ' - will be truncated)';
+        } else {
+          productIdeaCharCount.classList.remove('over-limit');
+        }
+      }
+
+      function autoResizeProductIdea() {
+        if (!productIdeaEl) return;
+        productIdeaEl.style.height = 'auto';
+        var h = productIdeaEl.scrollHeight;
+        productIdeaEl.style.height = Math.min(h, PRODUCT_IDEA_MAX_HEIGHT) + 'px';
+      }
+
+      function getPersonas() {
+        const names = document.querySelectorAll('.persona-name');
+        const perspectives = document.querySelectorAll('.persona-perspective');
+        return Array.from({ length: 5 }, function (_, i) {
+          return {
+            name: names[i] ? names[i].value.trim() : '',
+            perspective: perspectives[i] ? perspectives[i].value.trim() : ''
+          };
+        });
+      }
+
+      function buildDebatePrompt(productIdea, personas) {
+        const personaLines = personas.map(function (p, i) {
+          return (i + 1) + '. ' + p.name + (p.perspective ? ': ' + p.perspective : '');
+        }).join('\n');
+        return 'Generate a realistic 8-10 message debate among the following 5 personas about this product idea.\n\n' +
+          'Product idea:\n' + productIdea + '\n\n' +
+          'Personas (name and optional perspective):\n' + personaLines + '\n\n' +
+          'Requirements:\n' +
+          '- Each persona should argue from their defined perspective. If no perspective is given, infer a plausible one.\n' +
+          '- Include genuine disagreements, pushback, and different viewpoints.\n' +
+          '- End with a synthesis of key tensions, strongest objections, and potential insights.\n\n' +
+          'OUTPUT FORMAT - CRITICAL:\n' +
+          '- You must respond with valid JSON only. No other text whatsoever.\n' +
+          '- Do not wrap the JSON in markdown code fences (no ``` or ```json). Output raw JSON only.\n' +
+          '- Do not include any preamble, explanation, or text before or after the JSON.\n' +
+          'Use this exact structure:\n' +
+          '{"messages":[{"persona":"<name>","message":"<text>"},...],"summary":{"tensions":["..."],"objections":["..."],"insights":["..."]}}';
+      }
+
+      function parseDebateJson(str) {
+        if (typeof str !== 'string') { throw new Error('Expected string'); }
+        var s = str.trim();
+        var codeFenceStart = /^\s*```(?:json)?\s*\n?/i;
+        var codeFenceEnd = /\n?\s*```\s*$/;
+        if (codeFenceStart.test(s)) { s = s.replace(codeFenceStart, ''); }
+        if (codeFenceEnd.test(s)) { s = s.replace(codeFenceEnd, ''); }
+        return JSON.parse(s.trim());
+      }
+
+      function validateAndNormalizeDebateData(data) {
+        var result = { valid: false, data: null, partial: false, warning: null };
+        if (!data || typeof data !== 'object') return result;
+        var messages = Array.isArray(data.messages) ? data.messages : [];
+        var summary = data.summary && typeof data.summary === 'object' ? data.summary : {};
+        var hasValidMessages = messages.length > 0 && messages.every(function (m) {
+          return m && (typeof m.persona === 'string' || typeof m.message === 'string');
+        });
+        if (hasValidMessages && (Object.keys(summary).length >= 0)) {
+          result.valid = true;
+          result.data = { messages: messages, summary: summary };
+          if (!Array.isArray(data.messages) || !data.summary || !summary.tensions && !summary.objections && !summary.insights) {
+            result.partial = true;
+            result.warning = 'Response structure was incomplete; showing what we could extract.';
+          }
+          return result;
+        }
+        if (messages.length > 0) {
+          result.data = { messages: messages, summary: summary };
+          result.partial = true;
+          result.valid = true;
+          result.warning = 'Summary missing or invalid; showing conversation only.';
+        }
+        return result;
+      }
+
+      function displayDebate(data) {
+        conversationEl.innerHTML = '';
+        if (!data.messages || !Array.isArray(data.messages)) {
+          return;
+        }
+        const nameToIndex = {};
+        let nextIndex = 0;
+        data.messages.forEach(function (msg) {
+          const name = msg.persona || 'Unknown';
+          if (nameToIndex[name] === undefined) {
+            nameToIndex[name] = nextIndex % 5;
+            nextIndex++;
+          }
+          const colorIndex = nameToIndex[name];
+          const color = PERSONA_BUBBLE_COLORS[colorIndex];
+          const bubble = document.createElement('div');
+          bubble.className = 'bubble';
+          bubble.style.borderLeftColor = color;
+          bubble.innerHTML = '<span class="bubble-name" style="color:' + color + '">' + escapeHtml(name) + '</span><div class="bubble-text">' + escapeHtml(msg.message || '') + '</div>';
+          conversationEl.appendChild(bubble);
+        });
+
+        summaryEl.innerHTML = '';
+        var summary = data.summary;
+        if (!summary) {
+          return;
+        }
+        if (summary.tensions && summary.tensions.length) {
+          var h3 = document.createElement('h3');
+          h3.className = 'summary-heading';
+          h3.textContent = 'Key tensions';
+          summaryEl.appendChild(h3);
+          var ul = document.createElement('ul');
+          summary.tensions.forEach(function (t) {
+            var li = document.createElement('li');
+            li.textContent = t;
+            ul.appendChild(li);
+          });
+          summaryEl.appendChild(ul);
+        }
+        if (summary.objections && summary.objections.length) {
+          var h3 = document.createElement('h3');
+          h3.className = 'summary-heading';
+          h3.textContent = 'Strongest objections';
+          summaryEl.appendChild(h3);
+          var ul = document.createElement('ul');
+          summary.objections.forEach(function (o) {
+            var li = document.createElement('li');
+            li.textContent = o;
+            ul.appendChild(li);
+          });
+          summaryEl.appendChild(ul);
+        }
+        if (summary.insights && summary.insights.length) {
+          var h3 = document.createElement('h3');
+          h3.className = 'summary-heading';
+          h3.textContent = 'Potential insights';
+          summaryEl.appendChild(h3);
+          var ul = document.createElement('ul');
+          summary.insights.forEach(function (i) {
+            var li = document.createElement('li');
+            li.textContent = i;
+            ul.appendChild(li);
+          });
+          summaryEl.appendChild(ul);
+        }
+      }
+
+      function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+
+      var STORAGE_KEY = 'personaDebates';
+
+      function saveDebate(productIdea, personas, debateData) {
+        var debate = {
+          id: Date.now(),
+          timestamp: new Date().toISOString(),
+          productIdea: productIdea,
+          personas: personas,
+          debateData: debateData
+        };
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          var list = [];
+          if (raw != null) {
+            try {
+              list = JSON.parse(raw);
+            } catch (e) {
+              console.error('saveDebate: parse existing failed', { key: STORAGE_KEY, rawLength: raw ? raw.length : 0 }, e);
+            }
+          }
+          if (!Array.isArray(list)) { list = []; }
+          list.unshift(debate);
+          var maxRuns = typeof CONFIG !== 'undefined' && typeof CONFIG.MAX_SAVED_RUNS === 'number' ? CONFIG.MAX_SAVED_RUNS : 20;
+          if (list.length > maxRuns) {
+            list = list.slice(0, maxRuns);
+          }
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+          refreshHistory();
+          return true;
+        } catch (err) {
+          console.error('saveDebate: localStorage error', { key: STORAGE_KEY }, err);
+          return false;
+        }
+      }
+
+      function loadDebates() {
+        try {
+          var raw = localStorage.getItem(STORAGE_KEY);
+          if (raw == null) { return []; }
+          var list = JSON.parse(raw);
+          return Array.isArray(list) ? list : [];
+        } catch (err) {
+          console.error('loadDebates: parse failed, starting fresh', { key: STORAGE_KEY }, err);
+          try {
+            localStorage.removeItem(STORAGE_KEY);
+          } catch (e) {}
+          return [];
+        }
+      }
+
+      function refreshHistory() {
+        var container = document.getElementById('historyList');
+        if (!container) { return; }
+        container.innerHTML = '';
+        var debates = loadDebates();
+        if (debates.length === 0) {
+          var empty = document.createElement('li');
+          empty.className = 'history-empty';
+          empty.textContent = 'No saved debates yet';
+          container.appendChild(empty);
+          return;
+        }
+        debates.forEach(function (debate, index) {
+          var li = document.createElement('li');
+          li.className = 'history-item' + (index === 0 ? ' history-item-new' : '');
+          var label = document.createElement('span');
+          label.className = 'history-item-label';
+          var text = (debate.productIdea || '').trim();
+          label.textContent = text.length > 50 ? text.slice(0, 50) + '…' : text || '(No idea)';
+          var dateSpan = document.createElement('span');
+          dateSpan.className = 'history-item-date';
+          try {
+            dateSpan.textContent = debate.timestamp ? new Date(debate.timestamp).toLocaleString() : '';
+          } catch (e) {
+            dateSpan.textContent = '';
+          }
+          li.appendChild(label);
+          li.appendChild(dateSpan);
+          if (index === 0) {
+            var badge = document.createElement('span');
+            badge.className = 'history-new-badge';
+            badge.textContent = 'New';
+            li.appendChild(badge);
+          }
+          li.addEventListener('click', function () { loadSavedDebate(debate); });
+          container.appendChild(li);
+        });
+      }
+
+      function loadSavedDebate(debate) {
+        var ideaEl = document.getElementById('productIdea');
+        if (ideaEl) { ideaEl.value = debate.productIdea || ''; }
+        var names = document.querySelectorAll('.persona-name');
+        var perspectives = document.querySelectorAll('.persona-perspective');
+        var personas = debate.personas || [];
+        for (var i = 0; i < 5; i++) {
+          if (names[i]) { names[i].value = (personas[i] && personas[i].name) || ''; }
+          if (perspectives[i]) { perspectives[i].value = (personas[i] && personas[i].perspective) || ''; }
+        }
+        if (debate.debateData) {
+          displayDebate(debate.debateData);
+        }
+        updateCharCount();
+        autoResizeProductIdea();
+        updateStatus('Loaded saved debate', 'success');
+      }
+
+      async function generateDebate() {
+        var rawIdea = (document.getElementById('productIdea').value || '').trim();
+        var productIdea = rawIdea.length > PRODUCT_IDEA_MAX_LENGTH ? rawIdea.slice(0, PRODUCT_IDEA_MAX_LENGTH) : rawIdea;
+        var personas = getPersonas();
+
+        if (!productIdea) {
+          updateStatus('Please enter a product idea.', 'error');
+          return;
+        }
+        var missingName = personas.findIndex(function (p) { return !p.name; });
+        if (missingName !== -1) {
+          updateStatus('Please fill in all persona names.', 'error');
+          return;
+        }
+
+        setLoading(true);
+        updateStatus('Generating debate...', 'loading');
+
+        var prompt = buildDebatePrompt(productIdea, personas);
+        var url = typeof CONFIG !== 'undefined' ? CONFIG.OPENAI_ENDPOINT : '';
+        var model = typeof CONFIG !== 'undefined' ? CONFIG.OPENAI_MODEL : '';
+        var apiKey = typeof CONFIG_KEYS !== 'undefined' ? (CONFIG_KEYS.OPENAI_API_KEY || CONFIG_KEYS.CLAUDE_API_KEY) : '';
+        var rawResponseText = null;
+
+        console.log('generateDebate: before fetch', { url: url, model: model, productIdeaLength: productIdea.length, personaCount: personas.length });
+
+        try {
+          var response = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + apiKey
+            },
+            body: JSON.stringify({
+              model: model,
+              input: prompt
+            })
+          });
+
+          rawResponseText = await response.text();
+          console.log('generateDebate: after response', { ok: response.ok, status: response.status, statusText: response.statusText });
+
+          if (!response.ok) {
+            var errMsg = 'Request failed (' + response.status + ')';
+            if (response.status === 401) {
+              errMsg = 'Invalid API key - check your config-keys.js file';
+            } else if (response.status === 429) {
+              errMsg = 'Rate limited - wait a minute and try again';
+            } else if (response.status >= 500) {
+              errMsg = 'OpenAI service error - try again in a few minutes';
+            } else {
+              try {
+                var errJson = JSON.parse(rawResponseText);
+                if (errJson.error && errJson.error.message) errMsg = errJson.error.message;
+              } catch (e) {}
+            }
+            showError(errMsg, rawResponseText);
+            return;
+          }
+
+          var body;
+          try {
+            body = JSON.parse(rawResponseText);
+          } catch (parseErr) {
+            showError('Unexpected response format', rawResponseText);
+            return;
+          }
+
+          var content = null;
+          if (body.messages && Array.isArray(body.messages)) {
+            content = JSON.stringify(body);
+          } else if (body.choices && body.choices[0] && body.choices[0].message && body.choices[0].message.content) {
+            content = body.choices[0].message.content;
+          } else if (body.output && Array.isArray(body.output)) {
+            var textParts = [];
+            body.output.forEach(function (item) {
+              if (item.type === 'message' && item.content && Array.isArray(item.content)) {
+                item.content.forEach(function (block) {
+                  if (block.type === 'output_text' && block.text) textParts.push(block.text);
+                });
+              }
+            });
+            content = textParts.join('');
+          }
+
+          var data = null;
+          if (content) {
+            try {
+              data = typeof content === 'string' ? parseDebateJson(content) : content;
+            } catch (parseErr) {
+              showError('Unexpected response format', content.substring ? content.substring(0, 2000) : String(content));
+              return;
+            }
+          }
+
+          var validation = validateAndNormalizeDebateData(data);
+          if (validation.valid && validation.data) {
+            displayDebate(validation.data);
+            if (validation.partial && validation.warning) {
+              showError(validation.warning, null);
+            } else {
+              updateStatus('Debate generated!', 'success');
+            }
+            var saveOk = saveDebate(productIdea, personas, validation.data);
+            if (!validation.partial && !saveOk) {
+              updateStatus('Debate generated! Could not save to history.', 'success');
+            }
+          } else {
+            showError('Unexpected response format', data ? JSON.stringify(data).substring(0, 2000) : rawResponseText);
+          }
+        } catch (err) {
+          if (err.name === 'TypeError' && (err.message.indexOf('fetch') !== -1 || err.message.indexOf('network') !== -1)) {
+            showError('Network error - check your internet connection', err.message);
+          } else {
+            showError('Something went wrong', err.message);
+          }
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      generateBtn.addEventListener('click', function () {
+        generateDebate();
+      });
+
+      document.addEventListener('keydown', function (e) {
+        if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+          var target = e.target;
+          if (target && (target.id === 'productIdea' || target.classList.contains('persona-name') || target.classList.contains('persona-perspective'))) {
+            e.preventDefault();
+            generateDebate();
+          }
+        }
+      });
+
+      if (productIdeaEl) {
+        productIdeaEl.addEventListener('input', function () {
+          updateCharCount();
+          autoResizeProductIdea();
+        });
+      }
+
+      historyToggle.addEventListener('click', function () {
+        historySidebar.classList.toggle('collapsed');
+      });
+
+      var clearHistoryBtn = document.getElementById('clearHistoryBtn');
+      if (clearHistoryBtn) {
+        clearHistoryBtn.addEventListener('click', function () {
+          if (!confirm('Clear all saved debates?')) { return; }
+          try {
+            localStorage.removeItem(STORAGE_KEY);
+            refreshHistory();
+            updateStatus('History cleared', 'success');
+          } catch (err) {
+            console.error('clearHistory: localStorage error', { key: STORAGE_KEY }, err);
+          }
+        });
+      }
+
+      var resetAppBtn = document.getElementById('resetAppBtn');
+      if (resetAppBtn) {
+        resetAppBtn.addEventListener('click', function () {
+          if (!confirm('Reset app? This will clear all saved data and reload the page.')) { return; }
+          try {
+            localStorage.removeItem(STORAGE_KEY);
+            location.reload();
+          } catch (err) {
+            console.error('resetApp: error', err);
+            location.reload();
+          }
+        });
+      }
+
+      if (retryBtn) {
+        retryBtn.addEventListener('click', function () {
+          generateDebate();
+        });
+      }
+
+      function onPageReady() {
+        refreshHistory();
+        updateCharCount();
+        autoResizeProductIdea();
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', onPageReady);
+      } else {
+        onPageReady();
+      }
+      updateStatus('Ready', 'ready');
+    })();
+  </script>
+</body>
+</html>
